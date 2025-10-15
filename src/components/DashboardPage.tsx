@@ -18,6 +18,7 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
+import { logout } from "../utils/auth";
 
 // Define the interface for a prompt object
 interface Prompt {
@@ -43,8 +44,6 @@ const DashboardPage = () => {
     { id: 4, title: "Blog Post Outline", timestamp: "2 days ago", versions: 4 },
     { id: 5, title: "Marketing Copy", timestamp: "3 days ago", versions: 6 },
   ];
-
-  // Define the interface for a version object
   interface Version {
     id: number;
     version: string;
@@ -60,6 +59,7 @@ const DashboardPage = () => {
   ] : [];
 
   const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
@@ -133,7 +133,6 @@ const DashboardPage = () => {
                 />
               </div>
             </div>
-
             {/* Prompts List */}
             <div className="flex-1 overflow-y-auto p-2">
               {prompts.map((prompt) => (
