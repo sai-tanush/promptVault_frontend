@@ -13,7 +13,9 @@ import { Mail, Lock, Sparkles, ArrowRight, Shield } from "lucide-react";
 // Define the validation schema
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
