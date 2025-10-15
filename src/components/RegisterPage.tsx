@@ -12,8 +12,19 @@ import { Mail, Lock, Sparkles, ArrowRight, Shield } from "lucide-react";
 
 // Define the validation schema
 const registerSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters" })
+    .max(20, { message: "Username cannot exceed 20 characters" }),
+
   email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" })
+    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character" }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
