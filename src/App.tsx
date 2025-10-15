@@ -1,18 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import  LoginPage from "./components/LoginPage";
 import DashboardPage from "./components/DashboardPage";
 import { Toaster as SonnerToaster } from "./components/ui/sonner";
 import { RegisterPage } from "./components/RegisterPage";
-
-// A simple protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
