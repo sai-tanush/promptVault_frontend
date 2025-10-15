@@ -26,16 +26,35 @@ const LoginPage = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
-  
+
   const onSubmit = async (data: LoginFormValues) => {
-    console.log("Logging in with:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Welcome back!", {
-      description: "You have successfully logged in.",
-    });
-    
-    navigate("/dashboard");
+    try {
+
+      console.log("loginData = ", data);
+      setServerError(null);
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+      const response = await axios.post(`${BASE_URL}/auth/login`, data, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.status === 200) {
+        toast.success("Welcome back!", {
+          description: "You have successfully logged in.",
+        });
+
+        localStorage.setItem("token", response.data.token);
+
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      let message = "Something went wrong. Please try again.";
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
+      setServerError(message);
+      toast.error("Login failed", { description: message });
+    }
   };
 
   return (
