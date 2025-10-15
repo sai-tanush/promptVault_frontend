@@ -8,9 +8,9 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Mail, Lock, Sparkles, ArrowRight, Shield } from "lucide-react";
+import { Mail, Lock, Sparkles, ArrowRight, Shield, User } from "lucide-react";
+import axios from "axios";
 
-// Define the validation schema
 const registerSchema = z.object({
   username: z
     .string()
@@ -31,20 +31,43 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
-  
+
   const onSubmit = async (data: RegisterFormValues) => {
-    console.log("Registering with:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Account created successfully", {
-      description: "You will be redirected to the login page.",
-    });
-    
-    navigate("/login");
+    try {
+      console.log("Registering with:", data);
+
+      // ✅ Get backend URL from env
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+      const response = await axios.post(`${BASE_URL}/auth/register`, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 201) {
+        toast.success("Account created successfully", {
+          description: "You will be redirected to the login page.",
+        });
+
+        setTimeout(() => navigate("/login"), 1500);
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || "Something went wrong";
+        toast.error("Registration failed", { description: message });
+      } else {
+        toast.error("An unexpected error occurred", { description: "Please try again later." });
+      }
+    }
   };
 
   return (
@@ -53,41 +76,18 @@ export function RegisterPage() {
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-200/30 rounded-full mix-blend-multiply filter blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
           className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-200/30 rounded-full mix-blend-multiply filter blur-3xl"
-          animate={{
-            x: [0, -100, 0],
-            y: [0, -50, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+          animate={{ x: [0, -100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
           className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-200/20 rounded-full mix-blend-multiply filter blur-3xl"
-          animate={{
-            scale: [1, 1.15, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear",
-          }}
+          animate={{ scale: [1, 1.15, 1], rotate: [0, 180, 360] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
         />
       </div>
 
@@ -96,14 +96,8 @@ export function RegisterPage() {
         <motion.div
           key={i}
           className="absolute w-2 h-2 bg-emerald-400/20 rounded-full"
-          style={{
-            left: `${20 + i * 15}%`,
-            top: `${10 + i * 12}%`,
-          }}
-          animate={{
-            y: [0, -40, 0],
-            opacity: [0.2, 0.6, 0.2],
-          }}
+          style={{ left: `${20 + i * 15}%`, top: `${10 + i * 12}%` }}
+          animate={{ y: [0, -40, 0], opacity: [0.2, 0.6, 0.2] }}
           transition={{
             duration: 4 + i * 0.5,
             repeat: Infinity,
@@ -153,6 +147,40 @@ export function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              
+              {/* ✅ Username Field */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="space-y-2"
+              >
+                <Label htmlFor="username" className="text-emerald-900 text-sm font-semibold">
+                  Username
+                </Label>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 rounded-lg blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500 z-10 group-focus-within:text-emerald-600 transition-colors" />
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Choose a username"
+                    {...register("username")}
+                    className="relative pl-11 bg-white/90 border-emerald-200 text-emerald-900 placeholder:text-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-300 h-12 rounded-lg"
+                  />
+                </div>
+                {errors.username && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-500 text-sm font-medium"
+                  >
+                    {errors.username.message}
+                  </motion.p>
+                )}
+              </motion.div>
+
+              {/* Email Field */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -184,6 +212,7 @@ export function RegisterPage() {
                 )}
               </motion.div>
 
+              {/* Password Field */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -215,6 +244,7 @@ export function RegisterPage() {
                 )}
               </motion.div>
 
+              {/* Submit Button */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -228,14 +258,8 @@ export function RegisterPage() {
                 >
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                    animate={{
-                      x: ['-100%', '100%'],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   />
                   {isSubmitting ? (
                     <span className="flex items-center gap-2 relative z-10">
@@ -256,6 +280,7 @@ export function RegisterPage() {
               </motion.div>
             </form>
 
+            {/* Footer */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -286,7 +311,7 @@ export function RegisterPage() {
           </CardContent>
         </Card>
 
-        {/* Trust indicators */}
+        {/* Trust Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
