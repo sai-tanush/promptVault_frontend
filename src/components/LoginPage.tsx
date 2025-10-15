@@ -31,8 +31,6 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-
-      console.log("loginData = ", data);
       setServerError(null);
       const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 

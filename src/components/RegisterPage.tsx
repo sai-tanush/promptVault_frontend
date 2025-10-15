@@ -42,9 +42,6 @@ export function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      console.log("Registering with:", data);
-
-      // ✅ Get backend URL from env
       const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
       const response = await axios.post(`${BASE_URL}/auth/register`, data, {
