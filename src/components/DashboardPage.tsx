@@ -9,9 +9,11 @@ import { MainEdit } from "./dashboard/MainEdit";
 import { MainPreview } from "./dashboard/MainView";
 import { RightSidebar } from "./dashboard/RightSidebar";
 import axios from "axios";
+import { toast } from "sonner";
 
 export interface Prompt {
-  id: number;
+  id: string;
+  _id?: string;
   title: string;
   description: string;
   tags: string[];
@@ -45,7 +47,10 @@ const DashboardPage = () => {
   const handlePromptSelect = (prompt: Prompt) => { 
     console.log("Clicked on the prompt", prompt);
     setSelectedPrompt(prompt); 
-    // setIsEditing(false);
+    setIsEditing(false);
+
+    fetchPromptAllVersion(prompt.id);
+    
   };
 
   const fetchPrompts = async () => {
@@ -58,7 +63,7 @@ const DashboardPage = () => {
       });
       console.log("res in fetchPrompts = ", res);
 
-      const formattedPrompts = res.data.data.map((p: any) => ({
+      const formattedPrompts = res.data.data.map((p: Prompt) => ({
         id: p._id,
         title: p.title,
         description: p.description,
@@ -70,6 +75,37 @@ const DashboardPage = () => {
       setPrompts(formattedPrompts || []);
     } catch (error: unknown) {
       console.error("Error fetching prompts:", error);
+      toast.error("Prompts cant be loaded, Please retry after sometime");
+    }
+  }
+
+  const fetchPromptAllVersion = async (promptId: string) => {
+    try{
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/prompts/${promptId}/versions`, {
+        withCredentials: true, 
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (res.data.success) {
+        const versionsData = res.data.data.versions.map((v: any) => ({
+          id: v._id,
+          version: v.versionNumber?.toString() || "1",
+          title: v.afterObject?.title || "Untitled",
+          tags: v.afterObject?.tags || [],
+          description: v.afterObject?.description || "",
+          timestamp: v.createdAt,
+          status: v.afterObject?.status || "active",
+        }));
+
+        setVersions(versionsData);
+      } else {
+        toast.error(res.data.message || "Failed to fetch prompt versions.");
+      }
+    }
+    catch(error: unknown){
+      console.error("Error fetching prompts:", error);
+      toast.error("Version of Prompt cant be fetched, Please retry after sometime");
     }
   }
 
