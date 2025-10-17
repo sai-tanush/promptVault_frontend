@@ -63,7 +63,7 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
     }
   }, [prompt, reset]);
 
-  // ✅ Tag Handlers
+  // Tag Handlers
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
     if (trimmed && !tags?.includes(trimmed)) {
@@ -86,21 +86,16 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
     }
   };
 
-  // ✅ On Form Submit
-  const onSubmit = (data: PromptFormData) => {
-    console.log("Form submitted:", data);
-    createPrompt(data);
-  };
-
+  // Create Prompt Handler
   const createPrompt = async(data: PromptFormData) => {
     try{
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/prompts`,{
         title: data.title,
         description: data.description,
         tags: data.tags,
-      }, 
+      },
       {
-        withCredentials: true, 
+        withCredentials: true,
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -123,14 +118,68 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
 
       setIsEditing(false);
       setSelectedPrompt(null);
-
-
       }
     }
     catch(error: unknown){
-      console.error("Error fetching prompts:", error);
+      console.error("Error creating prompt:", error);
+      // Handle error display to user if necessary
     }
   }
+
+  // Update Prompt Handler
+  const updatePrompt = async(promptId: string, data: PromptFormData) => {
+    try {
+      const res = await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/prompts/${promptId}`, {
+        title: data.title,
+        description: data.description,
+        tags: data.tags,
+      }, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      console.log("res in updatePrompt = ", res);
+
+      if (res.data.success) {
+        // Update the prompt in the existing list
+        setPrompts((prevPrompts) =>
+          prevPrompts.map((p) =>
+            p.id === promptId
+              ? {
+                  ...p,
+                  title: res.data.data.title,
+                  description: res.data.data.description,
+                  tags: res.data.data.tags || [],
+                }
+              : p
+          )
+        );
+
+        setIsEditing(false);
+        setSelectedPrompt(null);
+      }
+    } catch (error: unknown) {
+      console.error("Error updating prompt:", error);
+      // Handle error display to user if necessary
+    }
+  };
+
+
+  // On Form Submit
+  const onSubmit = (data: PromptFormData) => {
+    console.log("--Form submitted:--", data);
+    console.log("inside OnSubmit Form");
+    console.log("prompt = ",prompt);
+    if (prompt) {
+      // Editing an existing prompt
+      updatePrompt(prompt.id, data);
+    } else {
+      // Creating a new prompt
+      createPrompt(data);
+    }
+  };
 
   return (
     <Card className="relative bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-xl p-6">
