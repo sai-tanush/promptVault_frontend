@@ -211,7 +211,7 @@ const DashboardPage = () => {
             {isEditing ? (
               <MainEdit prompt={selectedPrompt} setPrompts={setPrompts} onCancel={handleCancelEdit} setIsEditing={setIsEditing} setSelectedPrompt={setSelectedPrompt} refreshVersions={refreshVersions}/>
             ) : selectedPrompt ? (
-              <MainPreview prompt={selectedPrompt} onEditClick={() => setIsEditing(true)} />
+              <MainPreview prompt={selectedPrompt} selectedVersion={selectedVersion} onEditClick={() => setIsEditing(true)} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 mt-16">
                 <MessageSquare className="w-16 h-16 text-emerald-300 mb-4" />
