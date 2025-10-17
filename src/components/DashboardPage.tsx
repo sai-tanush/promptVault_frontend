@@ -173,7 +173,7 @@ const DashboardPage = () => {
         isDeleted: p.isDeleted,
         createdAt: p.createdAt,
         // description and tags are intentionally left out here as they are fetched per prompt later
-      }));
+      })).sort((a: Prompt, b: Prompt) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       setPrompts(formattedPrompts || []);
     } catch (error: unknown) {

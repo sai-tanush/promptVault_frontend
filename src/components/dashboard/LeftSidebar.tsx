@@ -22,6 +22,15 @@ interface LeftSidebarProps {
 // Define the type for archived prompts if it differs, otherwise use Prompt
 type ArchivedPrompt = Prompt;
 
+interface BackendPrompt {
+  _id: string;
+  title: string;
+  description?: string;
+  tags?: string[];
+  isDeleted: boolean;
+  createdAt: string;
+}
+
 export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore }: LeftSidebarProps) => {
 
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
@@ -32,14 +41,35 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
       const fetchArchievedPrompts = async () => {
         setIsLoadingArchived(true);
         try {
-          // NOTE: The user mentioned "router.get("/:promptId/versions", ...)" but this is for a specific prompt's versions.
-          // To fetch *all* archived prompts, a different endpoint or a different usage of an existing endpoint is likely needed.
-          // Assuming a generic endpoint '/api/prompts' with 'isDeleted=true' query parameter for now.
-          // This needs to be confirmed with the backend.
-          const response = await axios.get('/api/prompts', {
-            params: { isDeleted: true }
+          const token = localStorage.getItem("token");
+          if (!token) {
+            console.error("Authentication token not found.");
+            // You might want to use a toast notification here
+            return;
+          }
+
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/prompts`, {
+            params: { isDeleted: true },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
           });
-          setArchivedPrompts(response.data);
+
+          if (response.data.success) {
+            const formattedPrompts = response.data.data.map((p: BackendPrompt) => ({
+              id: p._id,
+              title: p.title,
+              description: p.description || "",
+              tags: p.tags || [],
+              isDeleted: p.isDeleted,
+              createdAt: p.createdAt,
+            })).sort((a: BackendPrompt, b: BackendPrompt) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setArchivedPrompts(formattedPrompts);
+          } else {
+            console.error("Failed to fetch archived prompts:", response.data.message);
+            // Handle error, e.g., show a toast
+          }
         } catch (error) {
           console.error("Error fetching archived prompts:", error);
           // Handle error appropriately, e.g., show a toast notification
@@ -51,16 +81,41 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
       // Function to restore a prompt
       const restorePrompt = async (promptId: string) => {
         try {
-          // Assuming an API endpoint to unarchive a prompt, e.g., PATCH /api/prompts/:id
-          await axios.patch(`/api/prompts/${promptId}`, { isDeleted: false });
-          // Remove the prompt from the archived list
-          setArchivedPrompts(archivedPrompts.filter(p => p.id !== promptId));
-          // Notify parent component to move prompt back to active list
-          onPromptRestore(promptId);
-          console.log(`Prompt ${promptId} restored successfully.`);
+          const token = localStorage.getItem("token");
+          if (!token) {
+            console.error("Authentication token not found.");
+            // You might want to use a toast notification here
+            return;
+          }
+
+          // Make PATCH request to restore prompt
+          const response = await axios.patch(
+            `${import.meta.env.VITE_BACKEND_URL}/prompts/${promptId}/restore`,
+            {}, // no body required, backend decides based on route
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              withCredentials: true,
+            }
+          );
+
+          if (response.data.success) {
+            // Remove restored prompt from archived list
+            setArchivedPrompts((prev) => prev.filter((p) => p.id !== promptId));
+
+            // Notify parent component (to refetch or update active list)
+            onPromptRestore(promptId);
+
+            console.log(`✅ Prompt ${promptId} restored successfully.`, response.data);
+            // Optionally: toast.success("Prompt restored successfully!");
+          } else {
+            console.error("❌ Failed to restore prompt:", response.data.message);
+            // Optionally: toast.error(response.data.message || "Failed to restore prompt");
+          }
         } catch (error) {
-          console.error(`Error restoring prompt ${promptId}:`, error);
-          // Handle error appropriately
+          console.error(`❌ Error restoring prompt ${promptId}:`, error);
+          // Optionally: toast.error("Failed to restore prompt. Please try again later.");
         }
       };
 
@@ -117,7 +172,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
                 onClick={() => handleViewToggle('active')}
               >
                 <MessageSquare className={`w-4 h-4 mr-2 ${viewMode === 'active' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                Active Prompts
+                Active
               </Button>
               <Button
                 variant="ghost"
@@ -125,7 +180,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
                 onClick={() => handleViewToggle('archived')}
               >
                 <Archive className={`w-4 h-4 mr-2 ${viewMode === 'archived' ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                Archived Prompts
+                Archived
           </Button>
         </div>
       </div>
