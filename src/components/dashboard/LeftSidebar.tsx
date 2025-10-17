@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { 
-  Plus, MessageSquare, Search, LogOut, 
-  Sparkles, User, Settings, 
+import {
+  Plus, MessageSquare, Search, LogOut,
+  Sparkles, User, Settings, Trash, // Import Trash icon
 } from "lucide-react";
 import { Button } from ".././ui/button";
 import { Input } from ".././ui/input";
@@ -13,9 +13,10 @@ interface LeftSidebarProps {
   onPromptSelect: (prompt: Prompt) => void;
   onNewPrompt: () => void;
   onLogoutClick: () => void;
+  onArchivePrompt: (promptId: string) => void; // Add prop for archiving
 }
 
-export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick }: LeftSidebarProps) => {
+export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt }: LeftSidebarProps) => {
 
   console.log("selectedPrompt = ", selectedPrompt);
   return (
@@ -47,14 +48,13 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
             key={prompt.id}
             whileHover={{ scale: 1.02, x: 4 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => onPromptSelect(prompt)}
-            className={`p-3 mb-2 rounded-lg cursor-pointer transition-all ${selectedPrompt?.id === prompt.id ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-300" : "bg-white/60 hover:bg-white/80 border border-transparent"}`}
+            className={`p-3 mb-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${selectedPrompt?.id === prompt.id ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-300" : "bg-white/60 hover:bg-white/80 border border-transparent"}`}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3 flex-grow min-w-0" onClick={() => onPromptSelect(prompt)}> {/* Wrap content in a div for click handling */}
               <MessageSquare className={`w-5 h-5 mt-0.5 ${selectedPrompt?.id === prompt.id ? "text-emerald-600" : "text-emerald-500"}`} />
-              <div className="flex gap-4 min-w-0">
+              <div className="flex gap-4 min-w-0 flex-grow"> {/* Allow title to grow */}
                 <h3 className="text-sm font-semibold text-emerald-900 truncate">{prompt.title}</h3>
-                <p className="text-xs text-emerald-600/70 mt-0.5">
+                <p className="text-xs text-emerald-600/70 mt-0.5 whitespace-nowrap"> {/* Prevent timestamp from wrapping */}
                   {new Date(prompt.createdAt).toLocaleDateString("en-US", {
                     day: "numeric",
                     month: "short",
@@ -65,6 +65,14 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
                 </p>
               </div>
             </div>
+            {/* Delete Icon */}
+            <Trash
+              className="w-4 h-4 text-red-500 cursor-pointer hover:text-red-700 ml-2 flex-shrink-0" // Added ml-2 for spacing and flex-shrink-0 to prevent shrinking
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent prompt selection when clicking delete
+                onArchivePrompt(prompt.id);
+              }}
+            />
           </motion.div>
         ))}
       </div>

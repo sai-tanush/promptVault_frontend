@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import {  MessageSquare, LogOut, } from "lucide-react";
+import {  MessageSquare, LogOut, Trash } from "lucide-react"; // Added Trash icon
 import { Button } from "../components/ui/button";
 import { logout } from "../utils/auth";
 import { LeftSidebar } from "./dashboard/LeftSidebar";
@@ -36,6 +36,8 @@ const DashboardPage = () => {
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false); // State for archive confirmation modal
+  const [promptIdToArchive, setPromptIdToArchive] = useState<string | null>(null); // State to store the ID of the prompt to archive
   const [prompts, setPrompts] = useState<Prompt[] | []>([]);
   const [versions, setVersions] = useState<Version[] | []>([]);
   
@@ -43,6 +45,64 @@ const DashboardPage = () => {
   const confirmLogout = () => { logout(); navigate("/login"); };
   const handleNewPrompt = () => { setSelectedPrompt(null); setIsEditing(true); };
   const handleCancelEdit = () => setIsEditing(false);
+
+  // Handler to open the archive confirmation modal
+  const handleArchivePromptClick = (promptId: string) => {
+    setPromptIdToArchive(promptId);
+    setIsArchiveModalOpen(true);
+  };
+
+  // Handler to perform the actual archive action after confirmation
+  const confirmArchivePrompt = async () => {
+    if (!promptIdToArchive) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      }
+
+      const response = await axios.patch(
+        `${import.meta.env.VITE_BACKEND_URL}/prompts/${promptIdToArchive}/archive`,
+        {}, // No body needed for this patch request
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Prompt archived successfully!");
+        // Remove the archived prompt from the list
+        setPrompts(prevPrompts => prevPrompts.filter(p => p.id !== promptIdToArchive));
+        // Clear selected prompt if it was the one archived
+        if (selectedPrompt && selectedPrompt.id === promptIdToArchive) {
+          setSelectedPrompt(null);
+          setSelectedVersion(null); // Also clear selected version
+        }
+        setIsArchiveModalOpen(false); // Close the modal after successful archive
+        setPromptIdToArchive(null); // Clear the ID
+      } else {
+        toast.error(response.data.message || "Failed to archive prompt.");
+        setIsArchiveModalOpen(false); // Close the modal on error
+        setPromptIdToArchive(null); // Clear the ID
+      }
+    } catch (error: unknown) {
+      console.error("Error archiving prompt:", error);
+      toast.error("An error occurred while archiving the prompt. Please try again.");
+      setIsArchiveModalOpen(false); // Close the modal on error
+      setPromptIdToArchive(null); // Clear the ID
+    }
+  };
+
+  // Handler to cancel the archive action
+  const cancelArchivePrompt = () => {
+    setIsArchiveModalOpen(false);
+    setPromptIdToArchive(null);
+  };
   
   const handlePromptSelect = (prompt: Prompt) => { 
     console.log("Clicked on the prompt", prompt);
@@ -99,7 +159,7 @@ const DashboardPage = () => {
         },
       });
       if (res.data.success) {
-        const versionsData = res.data.data.versions.map((v: any) => ({
+        const versionsData = res.data.data.versions.map((v: { _id: string; versionNumber?: number; afterObject?: { title?: string; tags?: string[]; description?: string; status?: string; }; createdAt: string; }) => ({
           id: v._id,
           version: v.versionNumber?.toString() || "1",
           title: v.afterObject?.title || "Untitled",
@@ -190,6 +250,21 @@ const DashboardPage = () => {
             </motion.div>
           </motion.div>
         )}
+        {/* Archive Confirmation Modal */}
+        {isArchiveModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={cancelArchivePrompt} className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0"><Trash className="w-6 h-6 text-red-600" /></div>
+                <div><h2 className="text-xl font-bold text-gray-800">Confirm Archive</h2><p className="text-sm text-gray-500 mt-1">Do you want to archive this prompt?</p></div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100" onClick={cancelArchivePrompt}>Cancel</Button>
+                <Button className="bg-red-600 hover:bg-red-700 text-white shadow-red-500/20 shadow-lg" onClick={confirmArchivePrompt}>Archive</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -197,7 +272,7 @@ const DashboardPage = () => {
         <motion.div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-200/20 rounded-full mix-blend-multiply filter blur-3xl" animate={{ x: [0, -100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}/>
       </div>
 
-      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} />
+      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} onArchivePrompt={handleArchivePromptClick} />
 
       <div className="flex-1 flex flex-col relative z-10">
         <header className="bg-white/80 backdrop-blur-xl border-b border-emerald-200/50 shadow-sm">
@@ -223,7 +298,7 @@ const DashboardPage = () => {
         </main>
       </div>
       
-      <RightSidebar versions={versions} selectedPrompt={selectedPrompt} selectedVersion={selectedVersion} onVersionSelect={setSelectedVersion} />
+      <RightSidebar versions={versions} selectedPrompt={selectedPrompt} selectedVersion={selectedVersion} onVersionSelect={setSelectedVersion} onArchivePrompt={handleArchivePromptClick} />
     </div>
   );
 };

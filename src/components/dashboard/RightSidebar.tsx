@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Plus, Clock, GitBranch,} from "lucide-react";
+import { Plus, Clock, GitBranch, Trash2 } from "lucide-react"; // Import Trash2 for delete icon
 import { Button } from ".././ui/button";
 import type { Prompt, Version } from "../DashboardPage";
 
@@ -9,9 +9,10 @@ interface RightSidebarProps {
   selectedPrompt: Prompt | null;
   selectedVersion: Version | null;
   onVersionSelect: (version: Version) => void;
+  onArchivePrompt: (promptId: string) => void; // New prop to handle archiving
 }
 
-export const RightSidebar = ({ versions, selectedPrompt, selectedVersion, onVersionSelect }: RightSidebarProps) => {
+export const RightSidebar = ({ versions, selectedPrompt, selectedVersion, onVersionSelect, onArchivePrompt }: RightSidebarProps) => {
   return (
     <motion.aside
       initial={{ x: 300, opacity: 0 }}
@@ -19,9 +20,17 @@ export const RightSidebar = ({ versions, selectedPrompt, selectedVersion, onVers
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="relative w-80 bg-white/80 backdrop-blur-xl border-l border-emerald-200/50 shadow-xl z-20 flex flex-col"
     >
-      <div className="p-4 border-b border-emerald-200/50">
-        <h2 className="text-lg font-bold text-emerald-900 mb-1">Versions</h2>
-        <p className="text-xs text-emerald-700/70">{selectedPrompt ? "Manage prompt versions" : "Select a prompt to view versions"}</p>
+      <div className="p-4 border-b border-emerald-200/50 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-emerald-900 mb-1">Versions</h2>
+          <p className="text-xs text-emerald-700/70">{selectedPrompt ? "Manage prompt versions" : "Select a prompt to view versions"}</p>
+        </div>
+        {selectedPrompt && (
+          <Trash2 
+            className="w-5 h-5 text-red-500 cursor-pointer hover:text-red-700 transition-colors" 
+            onClick={() => onArchivePrompt(selectedPrompt.id)} 
+          />
+        )}
       </div>
       <div className="flex-1 overflow-y-auto p-2">
         {selectedPrompt ? (
