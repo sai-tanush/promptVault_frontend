@@ -103,6 +103,38 @@ const DashboardPage = () => {
     setIsArchiveModalOpen(false);
     setPromptIdToArchive(null);
   };
+
+  const handlePromptRestore = async (promptId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      }
+
+      const response = await axios.patch(
+        `${import.meta.env.VITE_BACKEND_URL}/prompts/${promptId}/restore`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Prompt restored successfully!");
+        // Re-fetch the prompts to update the active list
+        fetchPrompts();
+      } else {
+        toast.error(response.data.message || "Failed to restore prompt.");
+      }
+    } catch (error: unknown) {
+      console.error("Error restoring prompt:", error);
+      toast.error("An error occurred while restoring the prompt. Please try again.");
+    }
+  };
   
   const handlePromptSelect = (prompt: Prompt) => { 
     console.log("Clicked on the prompt", prompt);
@@ -272,7 +304,7 @@ const DashboardPage = () => {
         <motion.div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-200/20 rounded-full mix-blend-multiply filter blur-3xl" animate={{ x: [0, -100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}/>
       </div>
 
-      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} onArchivePrompt={handleArchivePromptClick} />
+      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} onArchivePrompt={handleArchivePromptClick} onPromptRestore={handlePromptRestore} />
 
       <div className="flex-1 flex flex-col relative z-10">
         <header className="bg-white/80 backdrop-blur-xl border-b border-emerald-200/50 shadow-sm">
