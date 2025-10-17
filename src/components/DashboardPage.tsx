@@ -167,6 +167,11 @@ const DashboardPage = () => {
     }
   }
 
+  // Function to re-fetch versions after an update
+  const refreshVersions = (promptId: string) => {
+    fetchPromptAllVersion(promptId);
+  };
+
   useEffect(() => {
     fetchPrompts();
   },[])
@@ -204,7 +209,7 @@ const DashboardPage = () => {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
             {isEditing ? (
-              <MainEdit prompt={selectedPrompt} setPrompts={setPrompts} onCancel={handleCancelEdit} setIsEditing={setIsEditing} setSelectedPrompt={setSelectedPrompt}/>
+              <MainEdit prompt={selectedPrompt} setPrompts={setPrompts} onCancel={handleCancelEdit} setIsEditing={setIsEditing} setSelectedPrompt={setSelectedPrompt} refreshVersions={refreshVersions}/>
             ) : selectedPrompt ? (
               <MainPreview prompt={selectedPrompt} onEditClick={() => setIsEditing(true)} />
             ) : (

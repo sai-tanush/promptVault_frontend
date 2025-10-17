@@ -8,6 +8,7 @@ import { Input } from "../ui/input";
 import { Card } from "../ui/card";
 import type { Prompt } from "../DashboardPage";
 import axios from "axios";
+import { toast } from "sonner"; // Import toast here
 
 const promptSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -18,14 +19,15 @@ const promptSchema = z.object({
 type PromptFormData = z.infer<typeof promptSchema>;
 
 interface MainEditProps {
-  prompt: Prompt | null;
+  prompt: Prompt | null; // This represents the currently selected prompt, which might be an existing one or null for new
   onCancel: () => void;
-  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
-  setPrompts: React.Dispatch<React.SetStateAction<[] | Prompt[]>>
-  setSelectedPrompt: React.Dispatch<React.SetStateAction<Prompt | null>>
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  setPrompts: React.Dispatch<React.SetStateAction<Prompt[]>>; // Updated type for clarity
+  setSelectedPrompt: React.Dispatch<React.SetStateAction<Prompt | null>>;
+  refreshVersions: (promptId: string) => void; // Added refreshVersions prop
 }
 
-export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelectedPrompt }: MainEditProps) => {
+export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelectedPrompt, refreshVersions }: MainEditProps) => {
   const [tagInput, setTagInput] = useState("");
 
   const {
@@ -55,6 +57,7 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
         tags: prompt.tags || [],
       });
     } else {
+      // Reset for new prompt creation
       reset({
         title: "",
         description: "",
@@ -90,7 +93,7 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
   const createPrompt = async(data: PromptFormData) => {
     try{
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/prompts`,{
-        title: data.title,
+        title: data.title, // Use the title entered by the user
         description: data.description,
         tags: data.tags,
       },
@@ -104,24 +107,32 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
       console.log("res in createPrompt = ", res);
 
       if (res.data.success) {
-      const newPrompt: Prompt = {
-        id: res.data.data.promptId,
-        title: res.data.data.version.title,
-        description: res.data.data.version.description,
-        tags: res.data.data.version.tags || [],
-        isDeleted: res.data.data.isDeleted || false,
-        createdAt: res.data.data.createdAt,
-      };
+        // When creating a new prompt, the 'prompts' list (for sidebar) should be updated
+        // with the initial title entered by the user, not the latest version's title.
+        // The 'selectedPrompt' state (for MainView/MainEdit) will be updated later in DashboardPage
+        // with the latest version's details if needed.
+        const newPrompt: Prompt = {
+          id: res.data.data.promptId, // Assuming promptId is the new prompt's ID
+          title: data.title, // Use the title from the form data for the sidebar list
+          description: res.data.data.version.description, // Use latest version details for initial selectedPrompt if it's immediately displayed
+          tags: res.data.data.version.tags || [], // Use latest version details
+          isDeleted: res.data.data.isDeleted || false,
+          createdAt: res.data.data.createdAt,
+        };
 
-      // Add new prompt to the existing list
-      setPrompts((prev) => [newPrompt, ...(prev || [])]);
+        // Add new prompt to the existing list for the sidebar
+        setPrompts((prev) => [newPrompt, ...(prev || [])]);
 
-      setIsEditing(false);
-      setSelectedPrompt(null);
+        // Reset selected prompt and exit editing mode
+        setIsEditing(false);
+        setSelectedPrompt(null); // Clear selected prompt as a new one is created
+      } else {
+        toast.error(res.data.message || "Failed to create prompt.");
       }
     }
     catch(error: unknown){
       console.error("Error creating prompt:", error);
+      toast.error("An error occurred while creating the prompt.");
       // Handle error display to user if necessary
     }
   }
@@ -130,7 +141,7 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
   const updatePrompt = async(promptId: string, data: PromptFormData) => {
     try {
       const res = await axios.patch(`${import.meta.env.VITE_BACKEND_URL}/prompts/${promptId}`, {
-        title: data.title,
+        title: data.title, // The title from the form data is sent to the backend
         description: data.description,
         tags: data.tags,
       }, {
@@ -143,25 +154,53 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
       console.log("res in updatePrompt = ", res);
 
       if (res.data.success) {
-        // Update the prompt in the existing list
+        // When updating a prompt, the 'prompts' list (for sidebar) should NOT have its title updated.
+        // The 'selectedPrompt' state (for MainView/MainEdit) should be updated with the latest version's details.
+        // The update to selectedPrompt is handled in DashboardPage.tsx's fetchPromptAllVersion.
+        // Here, we only need to update the 'prompts' list to reflect the change in description/tags if needed,
+        // but the requirement is to keep the sidebar title the same.
+        // So, we update the prompt in the list, but only for description and tags, keeping the original title.
         setPrompts((prevPrompts) =>
           prevPrompts.map((p) =>
             p.id === promptId
               ? {
                   ...p,
-                  title: res.data.data.title,
-                  description: res.data.data.description,
-                  tags: res.data.data.tags || [],
+                  // Keep the original title for the sidebar list
+                  // title: res.data.data.title, // DO NOT update title here for sidebar
+                  description: res.data.data.description, // Update description
+                  tags: res.data.data.tags || [], // Update tags
                 }
               : p
           )
         );
 
+        // Update the selectedPrompt state directly if it's the one being edited,
+        // so MainView/MainEdit shows the latest changes immediately.
+        // DashboardPage's fetchPromptAllVersion will also update selectedPrompt,
+        // but this ensures immediate UI feedback.
+        setSelectedPrompt((prevSelectedPrompt) => {
+          if (!prevSelectedPrompt || prevSelectedPrompt.id !== promptId) return prevSelectedPrompt;
+          return {
+            ...prevSelectedPrompt,
+            title: res.data.data.title, // Use latest version title for MainView/MainEdit
+            description: res.data.data.description,
+            tags: res.data.data.tags || [],
+          };
+        });
+
+        // After a successful update, re-fetch the versions to update the version list in the RightSidebar.
+        if (prompt?.id) { // Ensure prompt.id is available
+          refreshVersions(prompt.id);
+        }
+
         setIsEditing(false);
-        setSelectedPrompt(null);
+        // setSelectedPrompt(null); // Keep the prompt selected to show updated details
+      } else {
+        toast.error(res.data.message || "Failed to update prompt.");
       }
     } catch (error: unknown) {
       console.error("Error updating prompt:", error);
+      toast.error("An error occurred while updating the prompt.");
       // Handle error display to user if necessary
     }
   };
@@ -170,10 +209,10 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
   // On Form Submit
   const onSubmit = (data: PromptFormData) => {
     console.log("--Form submitted:--", data);
-    console.log("inside OnSubmit Form");
-    console.log("prompt = ",prompt);
     if (prompt) {
       // Editing an existing prompt
+      // The 'prompt' prop here is the currently selected prompt from the sidebar.
+      // Its ID is needed for the update API call.
       updatePrompt(prompt.id, data);
     } else {
       // Creating a new prompt
