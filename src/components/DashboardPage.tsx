@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export interface Prompt {
   id: string;
-  _id?: string;
+  _id?: string; // This seems redundant with id, but keeping for now as it might be used elsewhere
   title: string;
   description: string;
   tags: string[];
@@ -21,14 +21,14 @@ export interface Prompt {
   createdAt: string;
 }
 export interface Version {
-    id: number;
-    version: string;
+    id: string; // This is _id from the backend
+    version: string; // versionNumber
     title: string;
     tags: string[];
     description: string;
-    timestamp: string;
-    status: string;
-  }
+    timestamp: string; // createdAt
+    status: string; // afterObject?.status
+}
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -46,11 +46,22 @@ const DashboardPage = () => {
   
   const handlePromptSelect = (prompt: Prompt) => { 
     console.log("Clicked on the prompt", prompt);
-    setSelectedPrompt(prompt); 
+    // When a prompt is selected, we want to display its latest version's details in MainPreview.
+    // The initial prompt object from fetchPrompts might not have the full details (description, tags).
+    // So, we fetch all versions and then update selectedPrompt with the latest version's data.
+    
+    // Temporarily set selectedPrompt to the basic info to show something while fetching versions
+    setSelectedPrompt({
+      id: prompt.id,
+      title: prompt.title, // Use title from the clicked prompt
+      description: "Loading description...", // Placeholder
+      tags: [], // Placeholder
+      isDeleted: prompt.isDeleted,
+      createdAt: prompt.createdAt,
+    });
     setIsEditing(false);
 
     fetchPromptAllVersion(prompt.id);
-    
   };
 
   const fetchPrompts = async () => {
@@ -63,13 +74,13 @@ const DashboardPage = () => {
       });
       console.log("res in fetchPrompts = ", res);
 
+      // Initial fetch only gets basic prompt info (id, title, isDeleted, createdAt)
       const formattedPrompts = res.data.data.map((p: Prompt) => ({
         id: p._id,
         title: p.title,
-        description: p.description,
-        tags: p.tags || [],
         isDeleted: p.isDeleted,
         createdAt: p.createdAt,
+        // description and tags are intentionally left out here as they are fetched per prompt later
       }));
 
       setPrompts(formattedPrompts || []);
@@ -99,13 +110,60 @@ const DashboardPage = () => {
         }));
 
         setVersions(versionsData);
+
+        // Find the latest version
+        if (versionsData.length > 0) {
+          // Sort versions by versionNumber in descending order to find the latest
+          versionsData.sort((a: Version, b: Version) => parseInt(b.version) - parseInt(a.version));
+          const latestVersion = versionsData[0];
+
+          // Update selectedPrompt with the latest version's details
+          setSelectedPrompt((prevSelectedPrompt) => {
+            if (!prevSelectedPrompt) return null; // Should not happen if called from handlePromptSelect
+            return {
+              ...prevSelectedPrompt, // Keep existing id, isDeleted, createdAt
+              title: latestVersion.title,
+              description: latestVersion.description,
+              tags: latestVersion.tags,
+            };
+          });
+        } else {
+          // If no versions are found, use the basic prompt info
+          setSelectedPrompt((prevSelectedPrompt) => {
+            if (!prevSelectedPrompt) return null;
+            return {
+              ...prevSelectedPrompt,
+              title: prevSelectedPrompt.title, // Keep title from initial selection
+              description: "No description available.",
+              tags: [],
+            };
+          });
+        }
       } else {
         toast.error(res.data.message || "Failed to fetch prompt versions.");
+        // If fetching versions fails, keep the basic prompt info
+        setSelectedPrompt((prevSelectedPrompt) => {
+          if (!prevSelectedPrompt) return null;
+          return {
+            ...prevSelectedPrompt,
+            description: "Error loading description.",
+            tags: [],
+          };
+        });
       }
     }
     catch(error: unknown){
       console.error("Error fetching prompts:", error);
       toast.error("Version of Prompt cant be fetched, Please retry after sometime");
+      // If fetching versions fails, keep the basic prompt info
+      setSelectedPrompt((prevSelectedPrompt) => {
+        if (!prevSelectedPrompt) return null;
+        return {
+          ...prevSelectedPrompt,
+          description: "Error loading description.",
+          tags: [],
+        };
+      });
     }
   }
 
@@ -166,4 +224,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-
