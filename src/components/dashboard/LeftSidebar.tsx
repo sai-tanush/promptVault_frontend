@@ -6,7 +6,7 @@ import {
 import { Button } from ".././ui/button";
 import { Input } from ".././ui/input";
 import type { Prompt } from "../DashboardPage";
-import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 import axios from 'axios'; // Assuming axios is available
 
 interface LeftSidebarProps {

@@ -321,7 +321,7 @@ export const MainEdit = ({ prompt, onCancel, setIsEditing, setPrompts, setSelect
             className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"
           >
             <Send className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
-            Save Version
+            {prompt ? "Save Prompt" : "Create New Prompt"}
           </Button>
         </div>
       </form>

@@ -21,7 +21,7 @@ export const MainPreview = ({ prompt, selectedVersion, onEditClick }: MainPrevie
     <Card className="bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-xl p-6">
       <div className="flex items-start justify-between mb-6">
         <div><h2 className="text-lg font-semibold text-emerald-900 mb-2">Prompt Preview</h2><p className="text-sm text-emerald-700/70">Review the details of your prompt.</p></div>
-        <Button onClick={onEditClick} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"><Pencil className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />Edit Prompt</Button>
+        <Button onClick={onEditClick} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"><Pencil className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />Revert Prompt</Button>
       </div>
       <div className="space-y-6">
         <div><label className="block text-sm font-semibold text-emerald-900 mb-2">Title</label><p className="text-xl font-bold text-emerald-800">{displayTitle}</p></div>

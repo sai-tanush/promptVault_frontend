@@ -208,6 +208,7 @@ const DashboardPage = () => {
           // Sort versions by versionNumber in descending order to find the latest
           versionsData.sort((a: Version, b: Version) => parseInt(b.version) - parseInt(a.version));
           const latestVersion = versionsData[0];
+          setSelectedVersion(latestVersion);
 
           // Update selectedPrompt with the latest version's details
           setSelectedPrompt((prevSelectedPrompt) => {
