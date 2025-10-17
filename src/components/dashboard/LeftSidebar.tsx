@@ -176,12 +176,12 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
               </Button>
               <Button
                 variant="ghost"
-                className={`flex-1 justify-start text-sm font-medium ${viewMode === 'archived' ? 'text-emerald-600 bg-emerald-100/50 hover:bg-emerald-100/70' : 'text-emerald-700 hover:bg-emerald-50'}`}
+                className={`flex-1 justify-start text-sm font-medium ${viewMode === 'archived' ? 'text-red-600 bg-red-100/50 hover:bg-red-100/70' : 'text-gray-700 hover:bg-gray-50'}`}
                 onClick={() => handleViewToggle('archived')}
               >
-                <Archive className={`w-4 h-4 mr-2 ${viewMode === 'archived' ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                <Archive className={`w-4 h-4 mr-2 ${viewMode === 'archived' ? 'text-red-600' : 'text-gray-500'}`} />
                 Archived
-          </Button>
+              </Button>
         </div>
       </div>
 
