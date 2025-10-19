@@ -135,8 +135,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
       };
 
       const promptsToDisplay = viewMode === 'active' ? prompts : archivedPrompts;
-      // selectedPrompt is assumed to be an active prompt. Archived prompts are not selected in the same way.
-      const selectedPromptInView = viewMode === 'active' ? selectedPrompt : null;
+      const selectedPromptInView = selectedPrompt;
 
       console.log("selectedPrompt = ", selectedPrompt); // Keep existing log
 
@@ -207,18 +206,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
               whileTap={{ scale: 0.98 }}
               className={`p-3 mb-2 rounded-lg cursor-pointer transition-all flex items-center justify-between ${selectedPromptInView?.id === prompt.id ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-300" : "bg-white/60 hover:bg-white/80 border border-transparent"}`}
             >
-              <div className="flex items-center gap-3 flex-grow min-w-0" onClick={() => {
-                if (viewMode === 'active') {
-                  onPromptSelect(prompt);
-                } else {
-                  // Handle selection of archived prompt if needed, e.g., show in a different panel or restore
-                  // For now, we'll just log it and not select it as the main prompt.
-                  console.log("Selected archived prompt:", prompt.title);
-                  // If you want to allow selection of archived prompts, you'd need a different handler
-                  // or a way to display them. For now, we'll prevent selection of archived prompts
-                  // as the main prompt.
-                }
-              }}>
+              <div className="flex items-center gap-3 flex-grow min-w-0" onClick={() => onPromptSelect(prompt)}>
                 <MessageSquare className={`w-5 h-5 mt-0.5 ${selectedPromptInView?.id === prompt.id ? "text-emerald-600" : "text-emerald-500"}`} />
                 <div className="flex gap-4 min-w-0 flex-grow"> {/* Allow title to grow */}
                   <h3 className="text-sm font-semibold text-emerald-900 truncate">{prompt.title}</h3>
@@ -249,7 +237,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="ml-2 text-emerald-500 hover:text-emerald-700"
+                  className="ml-2 text-emerald-400 hover:text-emerald-500" // Changed color to pale green
                   onClick={(e) => {
                     e.stopPropagation();
                     restorePrompt(prompt.id); // Call the new restore function
