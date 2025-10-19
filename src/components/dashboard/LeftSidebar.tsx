@@ -19,6 +19,8 @@ interface LeftSidebarProps {
   onPromptRestore: (promptId: string) => void; // Add prop for restoring
   username: string;
   email: string;
+  searchTerm: string; // Added for search functionality
+  onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void; // Added for search input handler
 }
 
 // Define the type for archived prompts if it differs, otherwise use Prompt
@@ -35,7 +37,7 @@ interface BackendPrompt {
   email: string;
 }
 
-export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email }: LeftSidebarProps) => {
+export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email, searchTerm, onSearchChange }: LeftSidebarProps) => {
 
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
   const [archivedPrompts, setArchivedPrompts] = useState<ArchivedPrompt[]>([]);
@@ -162,7 +164,12 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
             <Button onClick={onNewPrompt} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"><Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />New Prompt</Button>
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-              <Input placeholder="Search prompts..." className="pl-9 bg-white/90 border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20" />
+              <Input
+                placeholder="Search prompts..."
+                className="pl-9 bg-white/90 border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                value={searchTerm} // Bind to searchTerm state
+                onChange={onSearchChange} // Use the passed handler
+              />
             </div>
           </div>
 
