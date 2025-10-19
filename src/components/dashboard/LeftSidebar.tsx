@@ -17,6 +17,8 @@ interface LeftSidebarProps {
   onLogoutClick: () => void;
   onArchivePrompt: (promptId: string) => void;
   onPromptRestore: (promptId: string) => void; // Add prop for restoring
+  username: string;
+  email: string;
 }
 
 // Define the type for archived prompts if it differs, otherwise use Prompt
@@ -29,9 +31,11 @@ interface BackendPrompt {
   tags?: string[];
   isDeleted: boolean;
   createdAt: string;
+  username: string;
+  email: string;
 }
 
-export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore }: LeftSidebarProps) => {
+export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email }: LeftSidebarProps) => {
 
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
   const [archivedPrompts, setArchivedPrompts] = useState<ArchivedPrompt[]>([]);
@@ -255,11 +259,11 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
           {/* User Profile */}
           <div className="p-4 border-t border-emerald-200/50">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-white" /></div>
-              <div className="flex-1"><p className="text-sm font-semibold text-emerald-900">John Doe</p><p className="text-xs text-emerald-600/70">john@example.com</p></div>
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center"><User className="w-5 h-5 text-white" /></div> {/* Corrected User icon */}
+              <div className="flex-1"><p className="text-sm font-semibold text-emerald-900">{username}</p><p className="text-xs text-emerald-600/70">{email}</p></div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"><Settings className="w-4 h-4 mr-1" />Settings</Button>
+              <Button variant="outline" size="sm" className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50"><Settings className="w-4 h-4 mr-1" />Settings</Button> {/* Corrected Settings icon */}
               <Button variant="outline" size="sm" onClick={onLogoutClick} className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"><LogOut className="w-4 h-4" /></Button>
             </div>
           </div>

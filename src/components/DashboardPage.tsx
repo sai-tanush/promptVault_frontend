@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import {  MessageSquare, LogOut, Trash } from "lucide-react"; // Added Trash icon
+import {  MessageSquare, LogOut, Trash, } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { logout } from "../utils/auth";
 import { LeftSidebar } from "./dashboard/LeftSidebar";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export interface Prompt {
   id: string;
-  _id?: string; // This seems redundant with id, but keeping for now as it might be used elsewhere
+  _id?: string;
   title: string;
   description: string;
   tags: string[];
@@ -41,6 +41,10 @@ const DashboardPage = () => {
   const [prompts, setPrompts] = useState<Prompt[] | []>([]);
   const [versions, setVersions] = useState<Version[] | []>([]);
   
+  // State for user details
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+
   const handleLogoutClick = () => setIsLogoutModalOpen(true);
   const confirmLogout = () => { logout(); navigate("/login"); };
   const handleNewPrompt = () => { setSelectedPrompt(null); setIsEditing(true); };
@@ -138,11 +142,6 @@ const DashboardPage = () => {
   
   const handlePromptSelect = (prompt: Prompt) => { 
     console.log("Clicked on the prompt", prompt);
-    // When a prompt is selected, we want to display its latest version's details in MainPreview.
-    // The initial prompt object from fetchPrompts might not have the full details (description, tags).
-    // So, we fetch all versions and then update selectedPrompt with the latest version's data.
-    
-    // Temporarily set selectedPrompt to the basic info to show something while fetching versions
     setSelectedPrompt({
       id: prompt.id,
       title: prompt.title, // Use title from the clicked prompt
@@ -265,9 +264,41 @@ const DashboardPage = () => {
     fetchPromptAllVersion(promptId);
   };
 
+  const fetchUserDetails = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Authentication token not found.");
+          // Optionally, redirect to login or show an error toast
+          return;
+        }
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        });
+
+        console.log("Response in fetchUserDetails = ", response.data);
+        if (response.data.success) {
+          setUsername(response.data.username);
+          setEmail(response.data.email);
+        } else {
+          console.error("Failed to fetch user details:", response.data.message);
+          toast.error(response.data.message || "Failed to load user details.");
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching user details:", error);
+        toast.error("An error occurred while fetching user details. Please try again.");
+      }
+    };
+
+  // Fetch user details on initial render
   useEffect(() => {
-    fetchPrompts();
-  },[])
+
+    fetchUserDetails();
+    fetchPrompts(); 
+  }, []);
 
   return (
     <div className="relative flex h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden">
@@ -305,7 +336,7 @@ const DashboardPage = () => {
         <motion.div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-200/20 rounded-full mix-blend-multiply filter blur-3xl" animate={{ x: [0, -100, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}/>
       </div>
 
-      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} onArchivePrompt={handleArchivePromptClick} onPromptRestore={handlePromptRestore} />
+      <LeftSidebar prompts={prompts} selectedPrompt={selectedPrompt} onPromptSelect={handlePromptSelect} onNewPrompt={handleNewPrompt} onLogoutClick={handleLogoutClick} onArchivePrompt={handleArchivePromptClick} onPromptRestore={handlePromptRestore} username={username} email={email} />
 
       <div className="flex-1 flex flex-col relative z-10">
         <header className="bg-white/80 backdrop-blur-xl border-b border-emerald-200/50 shadow-sm">
