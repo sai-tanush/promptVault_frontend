@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   Plus, MessageSquare, Search, LogOut,
-  Sparkles, User, Settings, Trash, Archive, // Import Archive icon
+  Sparkles, User, Settings, Trash, Archive, Download, // Import Archive and Download icons
 } from "lucide-react";
 import { Button } from ".././ui/button";
 import { Input } from ".././ui/input";
@@ -125,6 +125,48 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
         }
       };
 
+      // Function to handle exporting prompts
+      const handleExportPrompts = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            console.error("Authentication token not found.");
+            // Consider using a toast notification here
+            return;
+          }
+
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/data/export`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            withCredentials: true,
+          });
+
+          if (response.data.success) {
+            const jsonData = response.data.data; // Assuming the prompts data is in response.data.data
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "prompts.json"; // Default filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            console.log("Prompts exported successfully.");
+            // Optionally: toast.success("Prompts exported successfully!");
+          } else {
+            console.error("Failed to export prompts:", response.data.message);
+            // Handle error, e.g., show a toast
+          }
+        } catch (error) {
+          console.error("Error exporting prompts:", error);
+          // Handle error appropriately, e.g., show a toast notification
+        }
+      };
+
       // Effect to fetch archived prompts when the component mounts and viewMode changes to 'archived'
       useEffect(() => {
         if (viewMode === 'archived') {
@@ -161,7 +203,14 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
               </div>
               <h2 className="text-lg font-bold text-emerald-900">PromptVault</h2>
             </div>
-            <Button onClick={onNewPrompt} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"><Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />New Prompt</Button>
+            <div className="flex flex-col gap-2"> {/* Changed to flex-col to stack buttons */}
+              <Button onClick={onNewPrompt} className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"><Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />New Prompt</Button>
+              {/* Export Prompts Button */}
+              <Button onClick={handleExportPrompts} variant="outline" className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50 group">
+                <Download className="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-700" />
+                Export Prompts
+              </Button>
+            </div>
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
               <Input
