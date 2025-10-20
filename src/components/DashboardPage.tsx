@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { logout } from "../utils/auth";
 import { LeftSidebar } from "./dashboard/LeftSidebar";
 import { MainEdit } from "./dashboard/MainEdit";
-import { MainPreview } from "./dashboard/MainView";
+import { MainView } from "./dashboard/MainView"; // Corrected import
 import { RightSidebar } from "./dashboard/RightSidebar";
 import axios from "axios";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ export interface Prompt {
   tags: string[];
   isDeleted: boolean;
   createdAt: string;
+  // Add versions property to Prompt interface for imported data
+  versions?: Version[];
 }
 export interface Version {
   id: string; // This is _id from the backend
@@ -57,6 +59,9 @@ const DashboardPage = () => {
   // State for search
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+
+  // State for imported prompts
+  const [importedPrompts, setImportedPrompts] = useState<Prompt[] | null>(null); // State to hold prompts from JSON import
 
   const handleLogoutClick = () => setIsLogoutModalOpen(true);
   const confirmLogout = () => {
@@ -115,7 +120,7 @@ const DashboardPage = () => {
         setIsArchiveModalOpen(false); // Close the modal on error
         setPromptIdToArchive(null); // Clear the ID
       }
-    } catch (error: unknown) { // Changed from unknown to any
+    } catch (error: unknown) { // Corrected type
       console.error("Error archiving prompt:", error);
       toast.error("An error occurred while archiving the prompt. Please try again.");
       setIsArchiveModalOpen(false); // Close the modal on error
@@ -155,7 +160,7 @@ const DashboardPage = () => {
       } else {
         toast.error(response.data.message || "Failed to restore prompt.");
       }
-    } catch (error: unknown) { // Changed from unknown to any
+    } catch (error: unknown) { // Corrected type
       console.error("Error restoring prompt:", error);
       toast.error("An error occurred while restoring the prompt. Please try again.");
     }
@@ -212,7 +217,7 @@ const DashboardPage = () => {
       })).sort((a: Prompt, b: Prompt) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       setPrompts(formattedPrompts || []);
-    } catch (error: unknown) { // Changed from unknown to any
+    } catch (error: unknown) { // Corrected type
       console.error("Error fetching prompts:", error);
       toast.error("Prompts can't be loaded. Please retry after some time.");
     }
@@ -314,7 +319,7 @@ const DashboardPage = () => {
           };
         });
       }
-    } catch (error: unknown) { // Changed from unknown to any
+    } catch (error: unknown) { // Corrected type
       console.error("Error fetching prompts:", error);
       toast.error("Version of Prompt cant be fetched, Please retry after sometime");
       // If fetching versions fails, keep the basic prompt info
@@ -360,7 +365,7 @@ const DashboardPage = () => {
         console.error("Failed to fetch user details:", response.data.message);
         toast.error(response.data.message || "Failed to load user details.");
       }
-    } catch (error: unknown) { // Changed from unknown to any
+    } catch (error: unknown) { // Corrected type
       console.error("Error fetching user details:", error);
       toast.error("An error occurred while fetching user details. Please try again.");
     }
@@ -371,11 +376,83 @@ const DashboardPage = () => {
     setSearchTerm(event.target.value);
   };
 
+  // Handler for importing prompts from JSON
+  const handleImportPrompts = (data: Prompt[]) => {
+    // Assuming data is an array of Prompt objects
+    console.log("Received data in handleImportPrompts:", data); // Added console log for debugging
+    setImportedPrompts(data);
+    // Optionally, you might want to clear selectedPrompt and exit editing mode
+    // if the import process should take over the entire UI.
+    // For now, we'll let MainView handle the display of imported prompts.
+  };
+
+  // Handler to save imported prompts to the database
+  const handleSaveImportedPrompts = async () => {
+    if (!importedPrompts || importedPrompts.length === 0) {
+      toast.error("No prompts to save.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        return;
+      }
+
+      // Assuming the backend has an endpoint like /data/import that accepts an array of prompts
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/data/import`,
+        { prompts: importedPrompts }, // Send the array of prompts
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Prompts imported successfully!");
+        // After successful import, clear the imported prompts state
+        setImportedPrompts(null);
+        // Optionally, refresh the main prompts list
+        fetchPrompts(searchTerm);
+        // Optionally, reset selected prompt and version
+        setSelectedPrompt(null);
+        setSelectedVersion(null);
+        setIsEditing(false); // Exit editing mode if it was active
+      } else {
+        toast.error(response.data.message || "Failed to import prompts.");
+      }
+    } catch (error: unknown) { // Corrected type
+      console.error("Error saving imported prompts:", error);
+      toast.error("An error occurred while saving imported prompts. Please try again.");
+    }
+  };
+
+  // Handler to cancel the import process
+  const handleCancelImport = () => {
+    setImportedPrompts(null); // Clear the imported prompts state
+    // Optionally, reset selected prompt and version if they were affected by import preview
+    setSelectedPrompt(null);
+    setSelectedVersion(null);
+    setIsEditing(false); // Ensure editing mode is off
+    toast.info("Prompt import cancelled.");
+  };
+
+
   // Fetch user details and initial prompts on initial render
   useEffect(() => {
     fetchUserDetails();
     fetchPrompts(""); // Initial fetch with an empty search term to load all active prompts
   }, []); // Empty dependency array means this runs only once on mount
+
+  // Log importedPrompts to help debug why MainView might not be showing the preview
+  useEffect(() => {
+    console.log("Current importedPrompts state in DashboardPage:", importedPrompts);
+  }, [importedPrompts]);
 
   return (
     <div className="relative flex h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden">
@@ -494,6 +571,7 @@ const DashboardPage = () => {
         email={email}
         searchTerm={searchTerm} // Pass searchTerm state
         onSearchChange={handleSearchChange} // Pass handler for search input
+        onImportPrompts={handleImportPrompts} // Pass the handler for import
       />
 
       <div className="flex-1 flex flex-col relative z-10">
@@ -513,7 +591,17 @@ const DashboardPage = () => {
 
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
-            {isEditing ? (
+            {importedPrompts && importedPrompts.length > 0 ? ( // Check if importedPrompts is populated
+              <MainView
+                prompt={null} // Pass null for single prompt when showing import preview
+                selectedVersion={null} // Pass null for selected version
+                onEditClick={() => setIsEditing(true)} // This might need adjustment if editing is not applicable during import preview
+                onPromptRestore={handlePromptRestore} // This might not be relevant here
+                importedPrompts={importedPrompts} // Pass importedPrompts state
+                onSaveImportedPrompts={handleSaveImportedPrompts} // Pass save handler
+                onCancelImport={handleCancelImport} // Pass cancel handler
+              />
+            ) : isEditing ? (
               <MainEdit
                 prompt={selectedPrompt}
                 setPrompts={setPrompts}
@@ -523,16 +611,19 @@ const DashboardPage = () => {
                 refreshVersions={refreshVersions}
               />
             ) : selectedPrompt ? (
-              <MainPreview
+              <MainView // Use MainView here for single prompt details
                 prompt={selectedPrompt}
                 selectedVersion={selectedVersion}
                 onEditClick={() => setIsEditing(true)}
                 onPromptRestore={handlePromptRestore}
+                importedPrompts={null} // Ensure null is passed when not in import mode
+                onSaveImportedPrompts={() => {}} // No-op, not used in this branch
+                onCancelImport={() => {}} // No-op, not used in this branch
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 mt-16">
                 <MessageSquare className="w-16 h-16 text-emerald-300 mb-4" />
-                <h2 className="text-xl font-semibold text-emerald-900 mb-2">
+                <h2 className="text-xl font-bold text-emerald-900 mb-2">
                   Welcome to PromptVault
                 </h2>
                 <p className="text-emerald-700/70 max-w-sm">

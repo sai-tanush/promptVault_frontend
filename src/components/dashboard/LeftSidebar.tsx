@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import {
   Plus, MessageSquare, Search, LogOut,
-  Sparkles, User, Settings, Trash, Archive, Download, // Import Archive and Download icons
+  Sparkles, User, Settings, Trash, Archive, Download, FileJson // Import FileJson for import icon
 } from "lucide-react";
 import { Button } from ".././ui/button";
 import { Input } from ".././ui/input";
 import type { Prompt } from "../DashboardPage";
-import { useState, useEffect } from 'react'; // Import useState and useEffect
+import { useState, useEffect, useRef } from 'react'; // Import useRef
 import axios from 'axios'; // Assuming axios is available
+import { toast } from "sonner"; // Import toast
 
 interface LeftSidebarProps {
   prompts: Prompt[];
@@ -21,6 +22,7 @@ interface LeftSidebarProps {
   email: string;
   searchTerm: string; // Added for search functionality
   onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void; // Added for search input handler
+  onImportPrompts: (importedData: Prompt[]) => void; // New prop to pass imported data up
 }
 
 // Define the type for archived prompts if it differs, otherwise use Prompt
@@ -37,11 +39,12 @@ interface BackendPrompt {
   email: string;
 }
 
-export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email, searchTerm, onSearchChange }: LeftSidebarProps) => {
+export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email, searchTerm, onSearchChange, onImportPrompts }: LeftSidebarProps) => {
 
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
   const [archivedPrompts, setArchivedPrompts] = useState<ArchivedPrompt[]>([]);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the file input
 
       // Function to fetch archived prompts
       const fetchArchievedPrompts = async () => {
@@ -50,7 +53,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
           const token = localStorage.getItem("token");
           if (!token) {
             console.error("Authentication token not found.");
-            // You might want to use a toast notification here
+            toast.error("Authentication token not found.");
             return;
           }
 
@@ -74,11 +77,11 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
             setArchivedPrompts(formattedPrompts);
           } else {
             console.error("Failed to fetch archived prompts:", response.data.message);
-            // Handle error, e.g., show a toast
+            toast.error(response.data.message || "Failed to fetch archived prompts.");
           }
         } catch (error) {
           console.error("Error fetching archived prompts:", error);
-          // Handle error appropriately, e.g., show a toast notification
+          toast.error("An error occurred while fetching archived prompts.");
         } finally {
           setIsLoadingArchived(false);
         }
@@ -90,7 +93,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
           const token = localStorage.getItem("token");
           if (!token) {
             console.error("Authentication token not found.");
-            // You might want to use a toast notification here
+            toast.error("Authentication token not found.");
             return;
           }
 
@@ -114,14 +117,14 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
             onPromptRestore(promptId);
 
             console.log(`✅ Prompt ${promptId} restored successfully.`, response.data);
-            // Optionally: toast.success("Prompt restored successfully!");
+            toast.success("Prompt restored successfully!");
           } else {
             console.error("❌ Failed to restore prompt:", response.data.message);
-            // Optionally: toast.error(response.data.message || "Failed to restore prompt");
+            toast.error(response.data.message || "Failed to restore prompt");
           }
         } catch (error) {
           console.error(`❌ Error restoring prompt ${promptId}:`, error);
-          // Optionally: toast.error("Failed to restore prompt. Please try again later.");
+          toast.error("Failed to restore prompt. Please try again later.");
         }
       };
 
@@ -131,7 +134,7 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
           const token = localStorage.getItem("token");
           if (!token) {
             console.error("Authentication token not found.");
-            // Consider using a toast notification here
+            toast.error("Authentication token not found.");
             return;
           }
 
@@ -156,15 +159,43 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             console.log("Prompts exported successfully.");
-            // Optionally: toast.success("Prompts exported successfully!");
+            toast.success("Prompts exported successfully!");
           } else {
             console.error("Failed to export prompts:", response.data.message);
-            // Handle error, e.g., show a toast
+            toast.error(response.data.message || "Failed to export prompts.");
           }
         } catch (error) {
           console.error("Error exporting prompts:", error);
-          // Handle error appropriately, e.g., show a toast notification
+          toast.error("An error occurred while exporting prompts.");
         }
+      };
+
+      // Function to handle importing prompts
+      const handleImportPrompts = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target?.result as string);
+            // Assuming the imported data needs to be passed up to a parent component for preview and saving
+            onImportPrompts(jsonData);
+            toast.success("JSON file loaded. Previewing prompts...");
+            // Clear the input value so the same file can be selected again if needed
+            event.target.value = '';
+          } catch (error) {
+            console.error("Error parsing JSON file:", error);
+            toast.error("Invalid JSON file. Please check the file format.");
+            event.target.value = ''; // Clear input on error
+          }
+        };
+        reader.onerror = (error) => {
+          console.error("Error reading file:", error);
+          toast.error("Error reading file. Please try again.");
+          event.target.value = ''; // Clear input on error
+        };
+        reader.readAsText(file);
       };
 
       // Effect to fetch archived prompts when the component mounts and viewMode changes to 'archived'
@@ -210,6 +241,23 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
                 <Download className="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-700" />
                 Export Prompts
               </Button>
+              {/* Import JSON Button */}
+              <Button
+                onClick={() => fileInputRef.current?.click()} // Trigger hidden file input
+                variant="outline"
+                className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50 group"
+              >
+                <FileJson className="w-4 h-4 mr-2 text-emerald-500 group-hover:text-emerald-700" />
+                Import JSON
+              </Button>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                accept=".json"
+                ref={fileInputRef}
+                onChange={handleImportPrompts}
+                className="hidden"
+              />
             </div>
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
