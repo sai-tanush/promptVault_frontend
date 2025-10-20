@@ -39,6 +39,14 @@ interface BackendPrompt {
   email: string;
 }
 
+// Define a type for the version object within the imported JSON
+interface ImportedVersion {
+  title: string;
+  tage?: string[]; // The incorrect key
+  tags?: string[]; // The correct key
+  description: string;
+}
+
 export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewPrompt, onLogoutClick, onArchivePrompt, onPromptRestore, username, email, searchTerm, onSearchChange, onImportPrompts }: LeftSidebarProps) => {
 
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
@@ -178,22 +186,32 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const jsonData = JSON.parse(e.target?.result as string);
-            // Assuming the imported data needs to be passed up to a parent component for preview and saving
+            let jsonData = JSON.parse(e.target?.result as string);
+            // Data cleaning: rename 'tage' to 'tags'
+            if (Array.isArray(jsonData)) {
+              jsonData = jsonData.map(prompt => ({
+                ...prompt,
+                versions: prompt.versions?.map((version: ImportedVersion) => ({
+                  ...version,
+                  tags: version.tage || version.tags || [], // Use 'tage', fallback to 'tags', then to empty array
+                  tage: undefined, // Remove the incorrect key
+                })) || [],
+              }));
+            }
+            
             onImportPrompts(jsonData);
             toast.success("JSON file loaded. Previewing prompts...");
-            // Clear the input value so the same file can be selected again if needed
             event.target.value = '';
           } catch (error) {
             console.error("Error parsing JSON file:", error);
             toast.error("Invalid JSON file. Please check the file format.");
-            event.target.value = ''; // Clear input on error
+            event.target.value = '';
           }
         };
         reader.onerror = (error) => {
           console.error("Error reading file:", error);
           toast.error("Error reading file. Please try again.");
-          event.target.value = ''; // Clear input on error
+          event.target.value = '';
         };
         reader.readAsText(file);
       };

@@ -84,50 +84,65 @@ export const MainView = ({
   }, [importedPrompts, selectedImportedPrompt]);
 
 
+
   // If there are imported prompts, show the import preview UI
   if (importedPrompts && importedPrompts.length > 0) {
     return (
       <div className="flex flex-col gap-6 p-6">
         <h2 className="text-2xl font-bold text-emerald-900">Imported Prompts Preview</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left side: List of imported prompts */}
-          <div className="lg:col-span-1 bg-white/80 backdrop-blur-xl border border-emerald-200/50 shadow-xl rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-emerald-900 mb-4">Prompts to Import</h3>
-            <div className="space-y-3 overflow-y-auto max-h-[60vh]"> {/* Scrollable list */}
-              {importedPrompts.map((p, index) => (
-                <Card
-                  key={p.id || `imported-${index}`} // Fallback key using index
-                  className={`p-3 rounded-lg cursor-pointer transition-all ${selectedImportedPrompt?.id === p.id ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-300" : "bg-white/60 hover:bg-white/80 border border-transparent"}`}
-                  onClick={() => setSelectedImportedPrompt(p)}
-                >
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="w-5 h-5 text-emerald-500" /> {/* MessageSquare icon */}
-                    <div className="flex-grow min-w-0">
-                      <p className="text-sm font-semibold text-emerald-900 truncate">{p.title || "Untitled Prompt"}</p>
-                      {/* Safely access versions and their first version's title */}
-                      <p className="text-xs text-emerald-600/70">Version: {p.versions && p.versions.length > 0 ? p.versions[0].title : 'N/A'}</p>
-                    </div>
+        
+        {/* Top section: List of imported prompts */}
+        <div className="bg-white/80 backdrop-blur-xl border border-emerald-200/50 shadow-xl rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-emerald-900 mb-4">Prompts to Import</h3>
+          <div className="space-y-3 overflow-y-auto max-h-[40vh]"> {/* Adjusted height */}
+            {importedPrompts.map((p, index) => (
+              <Card
+                key={p.id || `imported-${index}`}
+                className={`p-3 rounded-lg cursor-pointer transition-all ${selectedImportedPrompt?.id === p.id ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-300" : "bg-white/60 hover:bg-white/80 border border-transparent"}`}
+                onClick={() => setSelectedImportedPrompt(p)}
+              >
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-emerald-500" />
+                  <div className="flex-grow min-w-0">
+                    <p className="text-sm font-semibold text-emerald-900 truncate">{p.title || "Untitled Prompt"}</p>
+                    <p className="text-xs text-emerald-600/70">Versions: {p.versions?.length || 0}</p>
                   </div>
-                </Card>
-              ))}
-            </div>
+                </div>
+              </Card>
+            ))}
           </div>
+        </div>
 
-          {/* Right side: Detailed preview of the selected imported prompt */}
+        {/* Bottom section: Detailed preview and versions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {selectedImportedPrompt ? (
               <PromptDetailView
                 prompt={selectedImportedPrompt}
-                // Safely access the first version for display, or null if none exists
-                selectedVersion={selectedImportedPrompt.versions && selectedImportedPrompt.versions.length > 0 ? selectedImportedPrompt.versions[0] : null}
-                onEditClick={() => { /* Handle edit for imported prompt if needed */ }}
-                onPromptRestore={() => { /* Handle restore for imported prompt if needed */ }}
+                selectedVersion={null} // Simplified for now, or could be the latest version
+                onEditClick={() => {}}
+                onPromptRestore={() => {}}
               />
             ) : (
               <Card className="bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-xl p-6 h-full flex items-center justify-center">
-                <p className="text-lg text-emerald-700/70">Select a prompt from the list to preview.</p>
+                <p className="text-lg text-emerald-700/70">Select a prompt to preview its details.</p>
               </Card>
             )}
+          </div>
+          <div className="lg:col-span-1 bg-white/80 backdrop-blur-xl border border-emerald-200/50 shadow-xl rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-emerald-900 mb-4">Versions</h3>
+            <div className="space-y-3 overflow-y-auto max-h-[60vh]">
+              {selectedImportedPrompt?.versions && selectedImportedPrompt.versions.length > 0 ? (
+                selectedImportedPrompt.versions.map((v, index) => (
+                  <Card key={v.id || `version-${index}`} className="p-3 rounded-lg bg-white/60">
+                    <p className="text-sm font-semibold text-emerald-900">{v.title}</p>
+                    <p className="text-xs text-emerald-600/70">{new Date(v.timestamp).toLocaleString()}</p>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-sm text-emerald-700/70">No versions available for this prompt.</p>
+              )}
+            </div>
           </div>
         </div>
 
