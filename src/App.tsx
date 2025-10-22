@@ -8,7 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 function App() {
   // Component to handle the root route redirection logic
   const RootRedirect = () => {
-    const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
+    const token = localStorage.getItem('token');
     if (token) {
       return <Navigate to="/dashboard" replace />;
     }
@@ -19,7 +19,6 @@ function App() {
     <>
       <Router>
         <Routes>
-          {/* Root route to handle initial redirection */}
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

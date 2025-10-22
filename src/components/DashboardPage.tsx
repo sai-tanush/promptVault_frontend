@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { logout } from "../utils/auth";
 import { LeftSidebar } from "./dashboard/LeftSidebar";
 import { MainEdit } from "./dashboard/MainEdit";
-import { MainView } from "./dashboard/MainView"; // Corrected import
+import { MainView } from "./dashboard/MainView";
 import { RightSidebar } from "./dashboard/RightSidebar";
 import axios from "axios";
 import { toast } from "sonner";
@@ -19,17 +19,16 @@ export interface Prompt {
   tags: string[];
   isDeleted: boolean;
   createdAt: string;
-  // Add versions property to Prompt interface for imported data
   versions?: Version[];
 }
 export interface Version {
-  id: string; // This is _id from the backend
-  version: string; // versionNumber
+  id: string;
+  version: string;
   title: string;
   tags: string[];
   description: string;
-  timestamp: string; // createdAt
-  status: string; // afterObject?.status
+  timestamp: string;
+  status: string;
 }
 
 // Debounce utility function
@@ -48,7 +47,9 @@ const DashboardPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false); // State for archive confirmation modal
-  const [promptIdToArchive, setPromptIdToArchive] = useState<string | null>(null); // State to store the ID of the prompt to archive
+  const [promptIdToArchive, setPromptIdToArchive] = useState<string | null>(
+    null
+  ); // State to store the ID of the prompt to archive
   const [prompts, setPrompts] = useState<Prompt[] | []>([]);
   const [versions, setVersions] = useState<Version[] | []>([]);
 
@@ -92,8 +93,10 @@ const DashboardPage = () => {
       }
 
       const response = await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/prompts/${promptIdToArchive}/archive`,
-        {}, // No body needed for this patch request
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/prompts/${promptIdToArchive}/archive`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -104,27 +107,27 @@ const DashboardPage = () => {
 
       if (response.data.success) {
         toast.success("Prompt archived successfully!");
-        // Remove the archived prompt from the list
         setPrompts((prevPrompts) =>
           prevPrompts.filter((p) => p.id !== promptIdToArchive)
         );
-        // Clear selected prompt if it was the one archived
         if (selectedPrompt && selectedPrompt.id === promptIdToArchive) {
           setSelectedPrompt(null);
-          setSelectedVersion(null); // Also clear selected version
+          setSelectedVersion(null);
         }
-        setIsArchiveModalOpen(false); // Close the modal after successful archive
-        setPromptIdToArchive(null); // Clear the ID
+        setIsArchiveModalOpen(false);
+        setPromptIdToArchive(null);
       } else {
         toast.error(response.data.message || "Failed to archive prompt.");
-        setIsArchiveModalOpen(false); // Close the modal on error
-        setPromptIdToArchive(null); // Clear the ID
+        setIsArchiveModalOpen(false);
+        setPromptIdToArchive(null);
       }
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error archiving prompt:", error);
-      toast.error("An error occurred while archiving the prompt. Please try again.");
-      setIsArchiveModalOpen(false); // Close the modal on error
-      setPromptIdToArchive(null); // Clear the ID
+      toast.error(
+        "An error occurred while archiving the prompt. Please try again."
+      );
+      setIsArchiveModalOpen(false);
+      setPromptIdToArchive(null);
     }
   };
 
@@ -155,14 +158,16 @@ const DashboardPage = () => {
 
       if (response.data.success) {
         toast.success("Prompt restored successfully!");
-        // Re-fetch the prompts to update the active list
-        fetchPrompts(searchTerm); // Re-fetch with current search term if any
+        // Re-fetch the prompts
+        fetchPrompts(searchTerm);
       } else {
         toast.error(response.data.message || "Failed to restore prompt.");
       }
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error restoring prompt:", error);
-      toast.error("An error occurred while restoring the prompt. Please try again.");
+      toast.error(
+        "An error occurred while restoring the prompt. Please try again."
+      );
     }
   };
 
@@ -170,9 +175,9 @@ const DashboardPage = () => {
     console.log("Clicked on the prompt", prompt);
     setSelectedPrompt({
       id: prompt.id,
-      title: prompt.title, // Use title from the clicked prompt
-      description: "Loading description...", // Placeholder
-      tags: [], // Placeholder
+      title: prompt.title,
+      description: "Loading description...",
+      tags: [],
       isDeleted: prompt.isDeleted,
       createdAt: prompt.createdAt,
     });
@@ -181,7 +186,7 @@ const DashboardPage = () => {
     fetchPromptAllVersion(prompt.id);
   };
 
-  // Modified fetchPrompts to accept searchQuery
+  // fetchPrompts to accept searchQuery
   const fetchPrompts = useCallback(async (searchQuery: string = "") => {
     try {
       const token = localStorage.getItem("token");
@@ -196,41 +201,41 @@ const DashboardPage = () => {
       if (searchQuery) {
         params.search = searchQuery;
       }
-      // The backend controller applies `isDeleted` by default to `false` if not provided.
-      // So, searching will only return active prompts unless `isDeleted=true` is explicitly passed.
-      // For now, we'll rely on the backend's default behavior.
 
       const res = await axios.get(apiUrl, {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: params, // Pass search query as a parameter
+        params: params,
       });
       console.log("res in fetchPrompts = ", res);
 
-      const formattedPrompts = res.data.data.map((p: Prompt) => ({
-        id: p._id,
-        title: p.title,
-        isDeleted: p.isDeleted,
-        createdAt: p.createdAt,
-      })).sort((a: Prompt, b: Prompt) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const formattedPrompts = res.data.data
+        .map((p: Prompt) => ({
+          id: p._id,
+          title: p.title,
+          isDeleted: p.isDeleted,
+          createdAt: p.createdAt,
+        }))
+        .sort(
+          (a: Prompt, b: Prompt) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
       setPrompts(formattedPrompts || []);
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error fetching prompts:", error);
       toast.error("Prompts can't be loaded. Please retry after some time.");
     }
-  }, []); // Empty dependency array as it doesn't depend on component state directly
+  }, []);
 
-  // Effect to update debouncedSearchTerm when searchTerm changes
   useEffect(() => {
     const handler = debounce((term: string) => {
       setDebouncedSearchTerm(term);
-    }, 500); // 500ms debounce delay
+    }, 500);
     handler(searchTerm);
     return () => {
-      // Cleanup the timeout
       clearTimeout(handler as any);
     };
   }, [searchTerm]);
@@ -238,7 +243,7 @@ const DashboardPage = () => {
   // Effect to fetch prompts when debouncedSearchTerm changes
   useEffect(() => {
     fetchPrompts(debouncedSearchTerm);
-  }, [debouncedSearchTerm, fetchPrompts]); // Added fetchPrompts to dependency array
+  }, [debouncedSearchTerm, fetchPrompts]);
 
   const fetchPromptAllVersion = async (promptId: string) => {
     try {
@@ -278,18 +283,18 @@ const DashboardPage = () => {
 
         // Find the latest version
         if (versionsData.length > 0) {
-          // Sort versions by versionNumber in descending order to find the latest
           versionsData.sort(
-            (a: Version, b: Version) => parseInt(b.version) - parseInt(a.version)
+            (a: Version, b: Version) =>
+              parseInt(b.version) - parseInt(a.version)
           );
           const latestVersion = versionsData[0];
           setSelectedVersion(latestVersion);
 
           // Update selectedPrompt with the latest version's details
           setSelectedPrompt((prevSelectedPrompt) => {
-            if (!prevSelectedPrompt) return null; // Should not happen if called from handlePromptSelect
+            if (!prevSelectedPrompt) return null;
             return {
-              ...prevSelectedPrompt, // Keep existing id, isDeleted, createdAt
+              ...prevSelectedPrompt,
               title: latestVersion.title,
               description: latestVersion.description,
               tags: latestVersion.tags,
@@ -301,7 +306,7 @@ const DashboardPage = () => {
             if (!prevSelectedPrompt) return null;
             return {
               ...prevSelectedPrompt,
-              title: prevSelectedPrompt.title, // Keep title from initial selection
+              title: prevSelectedPrompt.title,
               description: "No description available.",
               tags: [],
             };
@@ -309,7 +314,6 @@ const DashboardPage = () => {
         }
       } else {
         toast.error(res.data.message || "Failed to fetch prompt versions.");
-        // If fetching versions fails, keep the basic prompt info
         setSelectedPrompt((prevSelectedPrompt) => {
           if (!prevSelectedPrompt) return null;
           return {
@@ -319,9 +323,11 @@ const DashboardPage = () => {
           };
         });
       }
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error fetching prompts:", error);
-      toast.error("Version of Prompt cant be fetched, Please retry after sometime");
+      toast.error(
+        "Version of Prompt cant be fetched, Please retry after sometime"
+      );
       // If fetching versions fails, keep the basic prompt info
       setSelectedPrompt((prevSelectedPrompt) => {
         if (!prevSelectedPrompt) return null;
@@ -344,7 +350,6 @@ const DashboardPage = () => {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Authentication token not found.");
-        // Optionally, redirect to login or show an error toast
         return;
       }
       const response = await axios.get(
@@ -365,9 +370,11 @@ const DashboardPage = () => {
         console.error("Failed to fetch user details:", response.data.message);
         toast.error(response.data.message || "Failed to load user details.");
       }
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error fetching user details:", error);
-      toast.error("An error occurred while fetching user details. Please try again.");
+      toast.error(
+        "An error occurred while fetching user details. Please try again."
+      );
     }
   };
 
@@ -378,12 +385,8 @@ const DashboardPage = () => {
 
   // Handler for importing prompts from JSON
   const handleImportPrompts = (data: Prompt[]) => {
-    // Assuming data is an array of Prompt objects
-    console.log("Received data in handleImportPrompts:", data); // Added console log for debugging
+    console.log("Received data in handleImportPrompts:", data);
     setImportedPrompts(data);
-    // Optionally, you might want to clear selectedPrompt and exit editing mode
-    // if the import process should take over the entire UI.
-    // For now, we'll let MainView handle the display of imported prompts.
   };
 
   // Handler to save imported prompts to the database
@@ -403,7 +406,7 @@ const DashboardPage = () => {
       // Assuming the backend has an endpoint like /data/import that accepts an array of prompts
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/data/import`,
-        { prompts: importedPrompts }, // Send the array of prompts
+        { prompts: importedPrompts },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -415,43 +418,42 @@ const DashboardPage = () => {
 
       if (response.data.success) {
         toast.success("Prompts imported successfully!");
-        // After successful import, clear the imported prompts state
         setImportedPrompts(null);
-        // Optionally, refresh the main prompts list
         fetchPrompts(searchTerm);
-        // Optionally, reset selected prompt and version
         setSelectedPrompt(null);
         setSelectedVersion(null);
-        setIsEditing(false); // Exit editing mode if it was active
+        setIsEditing(false);
       } else {
         toast.error(response.data.message || "Failed to import prompts.");
       }
-    } catch (error: unknown) { // Corrected type
+    } catch (error: unknown) {
       console.error("Error saving imported prompts:", error);
-      toast.error("An error occurred while saving imported prompts. Please try again.");
+      toast.error(
+        "An error occurred while saving imported prompts. Please try again."
+      );
     }
   };
 
   // Handler to cancel the import process
   const handleCancelImport = () => {
-    setImportedPrompts(null); // Clear the imported prompts state
-    // Optionally, reset selected prompt and version if they were affected by import preview
+    setImportedPrompts(null);
     setSelectedPrompt(null);
     setSelectedVersion(null);
-    setIsEditing(false); // Ensure editing mode is off
+    setIsEditing(false);
     toast.info("Prompt import cancelled.");
   };
-
 
   // Fetch user details and initial prompts on initial render
   useEffect(() => {
     fetchUserDetails();
-    fetchPrompts(""); // Initial fetch with an empty search term to load all active prompts
-  }, []); // Empty dependency array means this runs only once on mount
+    fetchPrompts("");
+  }, []);
 
-  // Log importedPrompts to help debug why MainView might not be showing the preview
   useEffect(() => {
-    console.log("Current importedPrompts state in DashboardPage:", importedPrompts);
+    console.log(
+      "Current importedPrompts state in DashboardPage:",
+      importedPrompts
+    );
   }, [importedPrompts]);
 
   return (
@@ -478,8 +480,12 @@ const DashboardPage = () => {
                   <LogOut className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">Confirm Logout</h2>
-                  <p className="text-sm text-gray-500 mt-1">Are you sure you want to log out?</p>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Confirm Logout
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Are you sure you want to log out?
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-8">
@@ -522,8 +528,12 @@ const DashboardPage = () => {
                   <Trash className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">Confirm Archive</h2>
-                  <p className="text-sm text-gray-500 mt-1">Do you want to archive this prompt?</p>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Confirm Archive
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Do you want to archive this prompt?
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-8">
@@ -569,9 +579,9 @@ const DashboardPage = () => {
         onPromptRestore={handlePromptRestore}
         username={username}
         email={email}
-        searchTerm={searchTerm} // Pass searchTerm state
-        onSearchChange={handleSearchChange} // Pass handler for search input
-        onImportPrompts={handleImportPrompts} // Pass the handler for import
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        onImportPrompts={handleImportPrompts}
       />
 
       <div className="flex-1 flex flex-col relative z-10">
@@ -591,15 +601,15 @@ const DashboardPage = () => {
 
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
-            {importedPrompts && importedPrompts.length > 0 ? ( // Check if importedPrompts is populated
+            {importedPrompts && importedPrompts.length > 0 ? (
               <MainView
-                prompt={null} // Pass null for single prompt when showing import preview
-                selectedVersion={null} // Pass null for selected version
-                onEditClick={() => setIsEditing(true)} // This might need adjustment if editing is not applicable during import preview
-                onPromptRestore={handlePromptRestore} // This might not be relevant here
-                importedPrompts={importedPrompts} // Pass importedPrompts state
-                onSaveImportedPrompts={handleSaveImportedPrompts} // Pass save handler
-                onCancelImport={handleCancelImport} // Pass cancel handler
+                prompt={null}
+                selectedVersion={null}
+                onEditClick={() => setIsEditing(true)}
+                onPromptRestore={handlePromptRestore}
+                importedPrompts={importedPrompts}
+                onSaveImportedPrompts={handleSaveImportedPrompts}
+                onCancelImport={handleCancelImport}
               />
             ) : isEditing ? (
               <MainEdit
@@ -611,14 +621,14 @@ const DashboardPage = () => {
                 refreshVersions={refreshVersions}
               />
             ) : selectedPrompt ? (
-              <MainView // Use MainView here for single prompt details
+              <MainView
                 prompt={selectedPrompt}
                 selectedVersion={selectedVersion}
                 onEditClick={() => setIsEditing(true)}
                 onPromptRestore={handlePromptRestore}
-                importedPrompts={null} // Ensure null is passed when not in import mode
-                onSaveImportedPrompts={() => {}} // No-op, not used in this branch
-                onCancelImport={() => {}} // No-op, not used in this branch
+                importedPrompts={null}
+                onSaveImportedPrompts={() => {}}
+                onCancelImport={() => {}}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 mt-16">
