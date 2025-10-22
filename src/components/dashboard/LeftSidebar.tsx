@@ -187,14 +187,17 @@ export const LeftSidebar = ({ prompts, selectedPrompt, onPromptSelect, onNewProm
         reader.onload = (e) => {
           try {
             let jsonData = JSON.parse(e.target?.result as string);
-            // Data cleaning: rename 'tage' to 'tags'
+            // Data cleaning and enrichment
             if (Array.isArray(jsonData)) {
-              jsonData = jsonData.map(prompt => ({
+              jsonData = jsonData.map((prompt, promptIndex) => ({
                 ...prompt,
-                versions: prompt.versions?.map((version: ImportedVersion) => ({
+                id: `imported-prompt-${promptIndex}`, // Add a unique ID to the prompt
+                versions: prompt.versions?.map((version: ImportedVersion, versionIndex: number) => ({
                   ...version,
-                  tags: version.tage || version.tags || [], // Use 'tage', fallback to 'tags', then to empty array
-                  tage: undefined, // Remove the incorrect key
+                  id: `imported-version-${promptIndex}-${versionIndex}`, // Add a unique ID to each version
+                  tags: version.tage || version.tags || [],
+                  timestamp: new Date().toISOString(), // Add a timestamp
+                  tage: undefined,
                 })) || [],
               }));
             }

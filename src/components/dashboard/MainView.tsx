@@ -10,10 +10,11 @@ interface MainPreviewProps {
   selectedVersion: Version | null;
   onEditClick: () => void;
   onPromptRestore: (promptId: string) => void;
+  isImported?: boolean; // New prop to indicate if the prompt is from an import
 }
 
 // Component to display a single prompt's details (can be reused for preview)
-const PromptDetailView = ({ prompt, selectedVersion, onEditClick, onPromptRestore }: MainPreviewProps) => {
+const PromptDetailView = ({ prompt, selectedVersion, onEditClick, onPromptRestore, isImported }: MainPreviewProps) => {
   // Determine which data to display
   const displayTitle = selectedVersion ? selectedVersion.title : prompt.title || "Untitled";
   const displayDescription = selectedVersion ? selectedVersion.description : prompt.description || "No description.";
@@ -29,7 +30,11 @@ const PromptDetailView = ({ prompt, selectedVersion, onEditClick, onPromptRestor
             Restore Prompt
           </Button>
         ) : (
-          <Button onClick={onEditClick} className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group">
+          <Button 
+            onClick={onEditClick} 
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 group"
+            disabled={isImported} // Disable if the prompt is from an import
+          >
             <Pencil className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
             Revert Prompt
           </Button>
@@ -73,13 +78,19 @@ export const MainView = ({
 
   // State to manage which imported prompt is currently selected for detailed preview
   const [selectedImportedPrompt, setSelectedImportedPrompt] = useState<ImportedPrompt | null>(null);
+  const [selectedImportedVersion, setSelectedImportedVersion] = useState<Version | null>(null);
 
   // Effect to set the first imported prompt as selected if none is selected and prompts are available
   useEffect(() => {
     if (importedPrompts && importedPrompts.length > 0 && !selectedImportedPrompt) {
-      setSelectedImportedPrompt(importedPrompts[0]);
-    } else if (importedPrompts && importedPrompts.length === 0) {
-      setSelectedImportedPrompt(null); // Clear selection if list becomes empty
+      const firstPrompt = importedPrompts[0];
+      setSelectedImportedPrompt(firstPrompt);
+      if (firstPrompt.versions && firstPrompt.versions.length > 0) {
+        setSelectedImportedVersion(firstPrompt.versions[0]);
+      }
+    } else if (!importedPrompts || importedPrompts.length === 0) {
+      setSelectedImportedPrompt(null);
+      setSelectedImportedVersion(null);
     }
   }, [importedPrompts, selectedImportedPrompt]);
 
@@ -119,9 +130,10 @@ export const MainView = ({
             {selectedImportedPrompt ? (
               <PromptDetailView
                 prompt={selectedImportedPrompt}
-                selectedVersion={null} // Simplified for now, or could be the latest version
+                selectedVersion={selectedImportedVersion}
                 onEditClick={() => {}}
                 onPromptRestore={() => {}}
+                isImported={true}
               />
             ) : (
               <Card className="bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-xl p-6 h-full flex items-center justify-center">
@@ -134,7 +146,11 @@ export const MainView = ({
             <div className="space-y-3 overflow-y-auto max-h-[60vh]">
               {selectedImportedPrompt?.versions && selectedImportedPrompt.versions.length > 0 ? (
                 selectedImportedPrompt.versions.map((v, index) => (
-                  <Card key={v.id || `version-${index}`} className="p-3 rounded-lg bg-white/60">
+                  <Card 
+                    key={v.id || `version-${index}`} 
+                    className={`p-3 rounded-lg cursor-pointer transition-all ${selectedImportedVersion?.id === v.id ? "bg-emerald-100/50" : "bg-white/60 hover:bg-white/80"}`}
+                    onClick={() => setSelectedImportedVersion(v)}
+                  >
                     <p className="text-sm font-semibold text-emerald-900">{v.title}</p>
                     <p className="text-xs text-emerald-600/70">{new Date(v.timestamp).toLocaleString()}</p>
                   </Card>
