@@ -5,7 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Mail, Lock, Sparkles, ArrowRight, Shield, User } from "lucide-react";
@@ -22,9 +28,13 @@ const registerSchema = z.object({
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters" })
-    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
     .regex(/[0-9]/, { message: "Password must contain at least one number" })
-    .regex(/[^A-Za-z0-9]/, { message: "Password must contain at least one special character" }),
+    .regex(/[^A-Za-z0-9]/, {
+      message: "Password must contain at least one special character",
+    }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -62,14 +72,15 @@ export function RegisterPage() {
         const message = error.response?.data?.message || "Something went wrong";
         toast.error("Registration failed", { description: message });
       } else {
-        toast.error("An unexpected error occurred", { description: "Please try again later." });
+        toast.error("An unexpected error occurred", {
+          description: "Please try again later.",
+        });
       }
     }
   };
 
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden p-4">
-      {/* Animated background patterns */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-200/30 rounded-full mix-blend-multiply filter blur-3xl"
@@ -88,7 +99,7 @@ export function RegisterPage() {
         />
       </div>
 
-      {/* Floating geometric shapes */}
+      {/* Geometric shapes */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
@@ -110,7 +121,7 @@ export function RegisterPage() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md"
       >
-        {/* Logo/Brand */}
+        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -132,27 +143,33 @@ export function RegisterPage() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent mb-2">
             Welcome
           </h1>
-          <p className="text-emerald-700/70 text-sm font-medium">Join us and start your journey</p>
+          <p className="text-emerald-700/70 text-sm font-medium">
+            Join us and start your journey
+          </p>
         </motion.div>
 
         <Card className="bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-2xl shadow-emerald-500/10">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold text-emerald-900">Create Account</CardTitle>
+            <CardTitle className="text-2xl font-bold text-emerald-900">
+              Create Account
+            </CardTitle>
             <CardDescription className="text-emerald-700/60">
               Fill in your details to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              
-              {/* ✅ Username Field */}
+              {/* Username Field */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className="space-y-2"
               >
-                <Label htmlFor="username" className="text-emerald-900 text-sm font-semibold">
+                <Label
+                  htmlFor="username"
+                  className="text-emerald-900 text-sm font-semibold"
+                >
                   Username
                 </Label>
                 <div className="relative group">
@@ -184,7 +201,10 @@ export function RegisterPage() {
                 transition={{ delay: 0.3 }}
                 className="space-y-2"
               >
-                <Label htmlFor="email" className="text-emerald-900 text-sm font-semibold">
+                <Label
+                  htmlFor="email"
+                  className="text-emerald-900 text-sm font-semibold"
+                >
                   Email Address
                 </Label>
                 <div className="relative group">
@@ -216,7 +236,10 @@ export function RegisterPage() {
                 transition={{ delay: 0.4 }}
                 className="space-y-2"
               >
-                <Label htmlFor="password" className="text-emerald-900 text-sm font-semibold">
+                <Label
+                  htmlFor="password"
+                  className="text-emerald-900 text-sm font-semibold"
+                >
                   Password
                 </Label>
                 <div className="relative group">
@@ -256,14 +279,22 @@ export function RegisterPage() {
                   <motion.div
                     className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
                     animate={{ x: ["-100%", "100%"] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                   />
                   {isSubmitting ? (
                     <span className="flex items-center gap-2 relative z-10">
                       <motion.div
                         className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                       />
                       Creating Your Account...
                     </span>
@@ -308,7 +339,7 @@ export function RegisterPage() {
           </CardContent>
         </Card>
 
-        {/* Trust Indicator */}
+        {/* Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -316,7 +347,9 @@ export function RegisterPage() {
           className="mt-8 flex items-center justify-center gap-2 text-xs text-emerald-700/70"
         >
           <Shield className="w-4 h-4" />
-          <span className="font-medium">Protected by enterprise-grade security</span>
+          <span className="font-medium">
+            Protected by enterprise-grade security
+          </span>
         </motion.div>
       </motion.div>
     </div>

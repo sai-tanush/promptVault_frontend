@@ -5,7 +5,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Mail, Lock, Sparkles, Shield, AlertTriangle } from "lucide-react";
@@ -25,7 +31,11 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -59,7 +69,6 @@ const LoginPage = () => {
 
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden p-4">
-      {/* Animated background patterns */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-200/30 rounded-full mix-blend-multiply filter blur-3xl"
@@ -97,13 +106,17 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent mb-2">
             Welcome Back
           </h1>
-          <p className="text-emerald-700/70 text-sm font-medium">Sign in to continue your journey</p>
+          <p className="text-emerald-700/70 text-sm font-medium">
+            Sign in to continue your journey
+          </p>
         </motion.div>
 
         {/* Login Form */}
         <Card className="bg-white/80 backdrop-blur-xl border-emerald-200/50 shadow-2xl shadow-emerald-500/10">
           <CardHeader className="space-y-1 pb-6">
-            <CardTitle className="text-2xl font-bold text-emerald-900">Sign In</CardTitle>
+            <CardTitle className="text-2xl font-bold text-emerald-900">
+              Sign In
+            </CardTitle>
             <CardDescription className="text-emerald-700/60">
               Enter your credentials to access your account
             </CardDescription>
@@ -113,7 +126,10 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-emerald-900 text-sm font-semibold">
+                <Label
+                  htmlFor="email"
+                  className="text-emerald-900 text-sm font-semibold"
+                >
                   Email Address
                 </Label>
                 <div className="relative group">
@@ -127,14 +143,19 @@ const LoginPage = () => {
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-red-500 text-sm font-medium">{errors.email.message}</p>
+                  <p className="text-red-500 text-sm font-medium">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
 
               {/* Password Field */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-emerald-900 text-sm font-semibold">
+                  <Label
+                    htmlFor="password"
+                    className="text-emerald-900 text-sm font-semibold"
+                  >
                     Password
                   </Label>
                   <Link
@@ -155,11 +176,13 @@ const LoginPage = () => {
                   />
                 </div>
                 {errors.password && (
-                  <p className="text-red-500 text-sm font-medium">{errors.password.message}</p>
+                  <p className="text-red-500 text-sm font-medium">
+                    {errors.password.message}
+                  </p>
                 )}
               </div>
 
-              {/* ✅ Inline Server Error */}
+              {/* Inline Server Error */}
               {serverError && (
                 <motion.div
                   initial={{ opacity: 0, y: -5 }}
@@ -185,7 +208,10 @@ const LoginPage = () => {
             <div className="mt-6 text-center text-sm">
               <p className="text-emerald-700/70">
                 Don’t have an account?{" "}
-                <Link to="/register" className="text-emerald-700 font-semibold hover:underline">
+                <Link
+                  to="/register"
+                  className="text-emerald-700 font-semibold hover:underline"
+                >
                   Create one
                 </Link>
               </p>
@@ -193,7 +219,7 @@ const LoginPage = () => {
           </CardContent>
         </Card>
 
-        {/* Trust indicator */}
+        {/* Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -201,7 +227,9 @@ const LoginPage = () => {
           className="mt-8 flex items-center justify-center gap-2 text-xs text-emerald-700/70"
         >
           <Shield className="w-4 h-4" />
-          <span className="font-medium">Protected by enterprise-grade security</span>
+          <span className="font-medium">
+            Protected by enterprise-grade security
+          </span>
         </motion.div>
       </motion.div>
     </div>
